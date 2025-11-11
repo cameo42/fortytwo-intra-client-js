@@ -1,23 +1,3 @@
-import * as superagent from "superagent";
-import { Method } from "./types";
-
-export function initRequest(method: Method, url: URL) {
-  const endpoint = url.toString()
-
-  switch (method) {
-    case "GET":
-      return superagent.get(endpoint);
-    case "POST":
-      return superagent.post(endpoint);
-    case "PATCH":
-      return superagent.patch(endpoint);
-    case "DELETE":
-      return superagent.delete(endpoint);
-    default:
-      throw Error("Invalid HTTP method");
-  }
-}
-
 export function getLastPage(header: string | undefined) {
   if (!header) {
     throw Error("No pagination link header");
