@@ -1,4 +1,4 @@
-import { reqOptions } from "./types";
+import { reqOptions } from "../types";
 import { AxiosResponse, AxiosError } from "axios";
 
 const green = "\x1b[42m";
@@ -18,7 +18,7 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 	}
 
 	tokens.push(options.method.padEnd(6, " "));
-	
+
 	// Add the base URL path
 	if (res.config?.url) {
 		const url = new URL(res.config.url);
@@ -26,8 +26,14 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 	}
 
 	// Add query parameters as object if they exist
+	console.log(queryParams);
 	if (Object.keys(queryParams).length > 0) {
+		delete queryParams.per_page;
+		delete queryParams.page; 
 		tokens.push(JSON.stringify(queryParams));
+	}
+	if (options.currpage) {
+		tokens.push(`| page: ${options.currpage}/${options.lastPage === Infinity ? "unknown" : options.lastPage}`)
 	}
 
 	return tokens.join(" ");
@@ -46,7 +52,7 @@ export function getErrorLogLine(err: AxiosError, options: reqOptions) {
 	}
 
 	tokens.push(options.method.padEnd(6, " "));
-	
+
 	// Add the base URL path
 	if (err.config?.url) {
 		const url = new URL(err.config.url);
