@@ -381,7 +381,7 @@ export class FortytwoIntraClient {
 	}
 
 	public async tokenInfos(
-		options: Omit<inputOptions, "body" | "perPage" | "maxPage">
+		options: Omit<inputOptions, "body" | "perPage" | "maxPage"> = {}
 	) {
 		return this.get(this.token_info_url, options);
 	}
