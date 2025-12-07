@@ -21,7 +21,6 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 	}
 
 	// Add query parameters as object if they exist
-	console.log(queryParams);
 	if (Object.keys(queryParams).length > 0) {
 		delete queryParams.per_page;
 		delete queryParams.page;

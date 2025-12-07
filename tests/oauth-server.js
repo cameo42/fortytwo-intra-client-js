@@ -32,6 +32,16 @@ app.get('/', (req, res) => {
   </body></html>`);
 });
 
+app.get('/health', async (req, res) => {
+	try {
+		const token = await client.tokenInfos({ logLine: true });
+		res.send(token);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('Token healthcheck failed');
+	}
+});
+
 app.get(REDIRECT_URI_PATH, async (req, res) => {
 	const { code, state } = req.query;
 	if (!code) return res.status(400).send('Missing code parameter');
