@@ -11,12 +11,7 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 	// Get query parameters as object
 	const queryParams = res.config?.params || {};
 
-	if (process.stdout.isTTY) {
-		tokens.push(`${green}${res.status}${reset}`);
-	} else {
-		tokens.push(`${res.status}`);
-	}
-
+	tokens.push(`${green}${res.status}${reset}`);
 	tokens.push(options.method.padEnd(6, " "));
 
 	// Add the base URL path
@@ -29,7 +24,7 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 	console.log(queryParams);
 	if (Object.keys(queryParams).length > 0) {
 		delete queryParams.per_page;
-		delete queryParams.page; 
+		delete queryParams.page;
 		tokens.push(JSON.stringify(queryParams));
 	}
 	if (options.currpage) {
@@ -45,12 +40,7 @@ export function getErrorLogLine(err: AxiosError, options: reqOptions) {
 	// Get query parameters as object
 	const queryParams = err.config?.params || {};
 
-	if (process.stdout.isTTY) {
-		tokens.push(`${red}${err.status}${reset}`);
-	} else {
-		tokens.push(`${err.status}`);
-	}
-
+	tokens.push(`${red}${err.status}${reset}`);
 	tokens.push(options.method.padEnd(6, " "));
 
 	// Add the base URL path

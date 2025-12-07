@@ -3,6 +3,7 @@ import rateLimit from "axios-rate-limit";
 import { getLastPage } from "./lib/pagination";
 import { inputOptions, perPage, reqOptions } from "./types";
 import { getErrorLogLine, getLogLine } from "./lib/logs";
+import crypto from "crypto";
 
 export interface FortytwoIntraClientConf {
 	redirect_uri: string | null;
@@ -347,19 +348,24 @@ export class FortytwoIntraClient {
 		return new URL(endpoint, this.base_url);
 	}
 
-	public getOAuthUrl(redirect_uri: string | null = null) {
-		redirect_uri ??= this.redirect_uri;
-		if (!redirect_uri) {
-			throw new Error(`undefined redirect_uri`);
-		}
+	public getOAuthUrl(
+		options: {
+			redirect_uri?: string,
+			state?: string,
+		} = {}
+	) {
+		const redirectUri = options.redirect_uri || this.redirect_uri;
+		if (!redirectUri) throw new Error(`Missing redirect_uri parameter`);
+		const state = options.state || crypto.randomBytes(32).toString('base64url')
 
 		const url = new URL(this.oauth_url);
 		url.searchParams.set("client_id", this.client_id);
-		url.searchParams.set("redirect_uri", redirect_uri);
+		url.searchParams.set("redirect_uri", redirectUri);
 		url.searchParams.set("response_type", "code");
 		url.searchParams.set("scope", this.scopes.join(" "));
+		url.searchParams.set("state", state);
 
-		return url.toString();
+		return { url: url.toString(), state };
 	}
 
 	public async exchangeOAuthCode(code: string, redirect_uri?: string) {
@@ -374,7 +380,9 @@ export class FortytwoIntraClient {
 		return res?.data;
 	}
 
-	public async tokenInfos() {
-		return this.get(this.token_info_url);
+	public async tokenInfos(
+		options: Omit<inputOptions, "body" | "perPage" | "maxPage">
+	) {
+		return this.get(this.token_info_url, options);
 	}
 }

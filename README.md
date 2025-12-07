@@ -107,9 +107,9 @@ await client.delete('teams/123');
 The `getAll` method automatically handles pagination and returns all results:
 
 ```typescript
-// Get all users from 42 Lyon (handles pagination automatically)
+// Get all users from 42Lyon (handles pagination automatically)
 const lyonUsers = await client.getAll('campus/9/users');
-console.log(`Paris campus has ${lyonUsers.length} users`);
+console.log(`42Lyon campus has ${lyonUsers.length} users`);
 
 // Get all projects with custom page size
 const allProjects = await client.getAll('projects', {
