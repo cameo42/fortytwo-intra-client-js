@@ -3,6 +3,9 @@
   "version": "3.1.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "author": {
+    "name": "Ian BERTRAND"
+  },
   "scripts": {
     "build": "tsc"
   },
@@ -12,8 +15,8 @@
   },
   "devDependencies": {
     "typescript": "^5.9.3",
-    "dotenv": "^16.6.1",
     "ts-node": "^10.9.2",
+    "dotenv": "^16.6.1",
     "express": "^4.18.2"
   },
   "files": [
