@@ -17,7 +17,7 @@ const client = new FortytwoIntraClient('your_client_id', 'your_client_secret');
 
 
 // Get a specific user by login
-const user = await client.get('users/jdoe');
+const user = await client.get('users/ibertran');
 console.log(user);
 ```
 
@@ -32,16 +32,19 @@ The `FortytwoIntraClient` class accepts three parameters:
 ### Configuration Options
 
 ```typescript
-interface Conf {
-  redirect_uri: string | null;      // OAuth redirect URI (default: null)
-  base_url: string;                 // API base URL (default: "https://api.intra.42.fr/v2/")
-  token_url: string;                // Token endpoint (default: "https://api.intra.42.fr/oauth/token")
-  oauth_url: string;                // OAuth endpoint (default: "https://api.intra.42.fr/oauth/authorize")
-  scopes: string[];                 // OAuth scopes (default: ["public"])
-  rate: number;                     // Requests per second (default: 2)
-  maxRetry: number;                 // Max retry attempts (default: 5)
-  logs: boolean;                    // Enable logging (default: true)
-  errors: boolean;                  // Enable error logging (default: true)
+interface FortytwoIntraClientConf {
+  redirect_uri: string | null;           // OAuth redirect URI (default: null)
+  base_url: string;                      // API base URL (default: "https://api.intra.42.fr/v2/")
+  token_url: string;                     // Token endpoint (default: "https://api.intra.42.fr/oauth/token")
+  oauth_url: string;                     // OAuth endpoint (default: "https://api.intra.42.fr/oauth/authorize")
+  token_info_url: string;                // Token info endpoint (default: "https://api.intra.42.fr/oauth/token/info")
+  scopes: string[];                      // OAuth scopes (default: ["public"])
+  rateLimitMaxRequests: number;          // Max requests per time window (default: 2)
+  rateLimitPerMilliseconds: number;      // Time window in milliseconds (default: 1200)
+  maxRetry: number;                      // Max retry attempts (default: 5)
+  logLine: boolean;                      // Enable request logging (default: true)
+  errLogBody: boolean;                   // Log error response bodies (default: true)
+  throwOnError: boolean;                 // Throw errors instead of returning them (default: true)
 }
 ```
 
@@ -49,10 +52,13 @@ interface Conf {
 
 ```typescript
 const client = new FortytwoIntraClient('your_client_id', 'your_client_secret', {
-  rate: 1,                        // 1 request per second
-  maxRetry: 3,                    // Retry up to 3 times
-  logs: false,                    // Disable logging
-  scopes: ['public', 'projects']  // Extended scopes
+  rateLimitMaxRequests: 1,              // 1 request per 1200ms
+  rateLimitPerMilliseconds: 1200,       // Time window
+  maxRetry: 3,                          // Retry up to 3 times
+  logLine: false,                       // Disable logging
+  errLogBody: false,                    // Disable error body logging
+  throwOnError: false,                  // Return errors instead of throwing
+  scopes: ['public', 'projects']        // Extended scopes
 });
 ```
 
@@ -189,16 +195,16 @@ Requests are automatically throttled based on the configured rate limit. The def
 
 ## Logging
 
-By default, the library logs all requests with status codes:
+By default, the library logs all requests with colored status codes and formatted parameters:
 
 ```
-✅ 200 GET    https://api.intra.42.fr/v2/users/jdoe
-✅ 200 GET    https://api.intra.42.fr/v2/campus/1
-🔄 429 GET    https://api.intra.42.fr/v2/projects retry 1/5
-✅ 200 GET    https://api.intra.42.fr/v2/projects retry 1/5
+200 GET    /v2/users/jdoe
+200 GET    /v2/campus { filter: { city: 'lyon' } }
+429 GET    /v2/projects
+200 GET    /v2/projects retry 1/5
 ```
 
-Disable logging by setting `logs: false` in the configuration.
+Disable logging by setting `logLine: false` in the configuration. Control error body logging with `errLogBody: false`.
 
 ## TypeScript Support
 
