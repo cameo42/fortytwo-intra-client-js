@@ -1,14 +1,27 @@
 import { reqOptions } from "../types";
 import { AxiosResponse, AxiosError } from "axios";
+import { inspect } from "util";
 
 const green = "\x1b[42m";
 const red = "\x1b[41m";
 const reset = "\x1b[0m";
 
+function formatQueryParams(params: Record<string, any>): string {
+	const { per_page, page, ...filteredParams } = params;
+	const keys = Object.keys(filteredParams);
+
+	if (keys.length === 0) return "";
+
+	return inspect(filteredParams, {
+		depth: Infinity,
+		compact: true,
+		breakLength: Infinity,
+		colors: true
+	});
+}
+
 export function getLogLine(res: AxiosResponse, options: reqOptions) {
 	const tokens: string[] = [];
-
-	// Get query parameters as object
 	const queryParams = res.config?.params || {};
 
 	tokens.push(`${green}${res.status}${reset}`);
@@ -20,14 +33,15 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 		tokens.push(url.pathname);
 	}
 
-	// Add query parameters as object if they exist
-	if (Object.keys(queryParams).length > 0) {
-		delete queryParams.per_page;
-		delete queryParams.page;
-		tokens.push(JSON.stringify(queryParams));
+	// Add query parameters
+	const formattedParams = formatQueryParams(queryParams);
+	if (formattedParams) {
+		tokens.push(formattedParams);
 	}
+
+	// Add pagination info
 	if (options.currpage) {
-		tokens.push(`| page: ${options.currpage}/${options.lastPage === Infinity ? "unknown" : options.lastPage}`)
+		tokens.push(`| ${options.currpage}/${options.lastPage === Infinity ? "..." : options.lastPage}`);
 	}
 
 	return tokens.join(" ");
@@ -35,8 +49,6 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 
 export function getErrorLogLine(err: AxiosError, options: reqOptions) {
 	const tokens: string[] = [];
-
-	// Get query parameters as object
 	const queryParams = err.config?.params || {};
 
 	tokens.push(`${red}${err.status}${reset}`);
@@ -48,9 +60,10 @@ export function getErrorLogLine(err: AxiosError, options: reqOptions) {
 		tokens.push(url.pathname);
 	}
 
-	// Add query parameters as object if they exist
-	if (Object.keys(queryParams).length > 0) {
-		tokens.push(JSON.stringify(queryParams));
+	// Add query parameters
+	const formattedParams = formatQueryParams(queryParams);
+	if (formattedParams) {
+		tokens.push(formattedParams);
 	}
 
 	return tokens.join(" ");
