@@ -44,7 +44,6 @@ interface FortytwoIntraClientConf {
   maxRetry: number;                      // Max retry attempts (default: 5)
   logLine: boolean;                      // Enable request logging (default: true)
   errLogBody: boolean;                   // Log error response bodies (default: true)
-  throwOnError: boolean;                 // Throw errors instead of returning them (default: true)
 }
 ```
 
@@ -57,7 +56,6 @@ const client = new FortytwoIntraClient('your_client_id', 'your_client_secret', {
   maxRetry: 3,                          // Retry up to 3 times
   logLine: false,                       // Disable logging
   errLogBody: false,                    // Disable error body logging
-  throwOnError: false,                  // Return errors instead of throwing
   scopes: ['public', 'projects']        // Extended scopes
 });
 ```

@@ -1,9 +1,9 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
 import { getLastPage } from "./lib/pagination";
-import { inputOptions, perPage, reqOptions } from "./types";
+import { inputOptions, reqOptions } from "./types";
 import { getErrorLogLine, getLogLine } from "./lib/logs";
-import crypto from "crypto";
+import { FortytwoIntraClientError, simplifyAxiosError, isFortytwoIntraClientError } from "./lib/errors";
 
 export interface FortytwoIntraClientConf {
 	redirect_uri: string | null;
@@ -17,7 +17,6 @@ export interface FortytwoIntraClientConf {
 	maxRetry: number;
 	logLine: boolean;
 	errLogBody: boolean;
-	throwOnError: boolean;
 }
 
 const defaultConf: FortytwoIntraClientConf = {
@@ -32,7 +31,6 @@ const defaultConf: FortytwoIntraClientConf = {
 	maxRetry: 5,
 	logLine: true,
 	errLogBody: true,
-	throwOnError: true,
 };
 
 export class FortytwoIntraClient {
@@ -49,7 +47,6 @@ export class FortytwoIntraClient {
 	private maxRetry: number;
 	private logLine: boolean;
 	private errLogBody: boolean;
-	private throwOnError: boolean;
 
 	private access_token: string | null;
 
@@ -81,7 +78,6 @@ export class FortytwoIntraClient {
 		this.maxRetry = config.maxRetry;
 		this.logLine = config.logLine;
 		this.errLogBody = config.errLogBody;
-		this.throwOnError = config.throwOnError;
 
 		this.access_token = null;
 	}
@@ -154,7 +150,7 @@ export class FortytwoIntraClient {
 					options.attempt++;
 					return this.reqHandler(url, options);
 				} else {
-					if (this.throwOnError) throw err;
+					throw simplifyAxiosError(err);
 				}
 			} else {
 				throw err;
@@ -213,6 +209,7 @@ export class FortytwoIntraClient {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
 		}
+
 		const res = await this.reqHandler(endpoint, {
 			method: "POST",
 			attempt: 0,
@@ -232,6 +229,7 @@ export class FortytwoIntraClient {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
 		}
+
 		const res = await this.reqHandler(endpoint, {
 			method: "PUT",
 			attempt: 0,
@@ -251,6 +249,7 @@ export class FortytwoIntraClient {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
 		}
+
 		const res = await this.reqHandler(endpoint, {
 			method: "PATCH",
 			attempt: 0,
@@ -270,6 +269,7 @@ export class FortytwoIntraClient {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
 		}
+
 		const res = await this.reqHandler(endpoint, {
 			method: "DELETE",
 			attempt: 0,
@@ -293,7 +293,7 @@ export class FortytwoIntraClient {
 		const perPage = options.perPage || 100;
 
 		let url = new URL(endpoint);
-		const initialRes = await this.reqHandler(url, {
+		const firstPage = await this.reqHandler(url, {
 			method: "GET",
 			attempt: 0,
 			currpage: 1,
@@ -311,37 +311,31 @@ export class FortytwoIntraClient {
 
 		let lastPage: number;
 		try {
-			lastPage = Math.min(getLastPage(initialRes.headers["link"]), options.maxPages || Infinity);
+			lastPage = Math.min(getLastPage(firstPage.headers["link"]), options.maxPages || Infinity);
 		} catch (err) {
-			return initialRes?.data;
+			return firstPage?.data;
 		}
 
-		const promises = [];
-		for (let i = 2; i <= lastPage; i++) {
-			url = new URL(endpoint);
+		const promises = Array.from({ length: lastPage - 1 }, (_, i) => i + 2)
+			.map(pageNumber => this.reqHandler(url, {
+				method: "GET",
+				attempt: 0,
+				currpage: pageNumber,
+				lastPage: lastPage,
+				maxRetry: this.maxRetry,
+				logLine: this.logLine,
+				errLogBody: this.errLogBody,
+				...options,
+				query: {
+					...options.query,
+					page: pageNumber,
+					per_page: perPage,
+				}
+			}));
 
-			promises.push(
-				this.reqHandler(url, {
-					method: "GET",
-					attempt: 0,
-					currpage: i,
-					lastPage: lastPage,
-					maxRetry: this.maxRetry,
-					logLine: this.logLine,
-					errLogBody: this.errLogBody,
-					...options,
-					query: {
-						...options.query,
-						page: i,
-						per_page: perPage,
-					}
-				})
-			);
-		}
+		const followingPages = await Promise.all(promises);
 
-		return Promise.all(promises).then((values) => {
-			return initialRes?.data.concat(...values.map((value) => value.data));
-		});
+		return firstPage?.data.concat(...followingPages.map((value) => value.data));
 	}
 
 	public URL(endpoint: string) {
@@ -355,15 +349,20 @@ export class FortytwoIntraClient {
 		} = {}
 	) {
 		const redirectUri = options.redirect_uri || this.redirect_uri;
-		if (!redirectUri) throw new Error(`Missing redirect_uri parameter`);
-		const state = options.state || crypto.randomBytes(32).toString('base64url')
+		if (!redirectUri) {
+			throw new Error(`Missing redirect_uri parameter`);
+		}
 
 		const url = new URL(this.oauth_url);
 		url.searchParams.set("client_id", this.client_id);
 		url.searchParams.set("redirect_uri", redirectUri);
 		url.searchParams.set("response_type", "code");
 		url.searchParams.set("scope", this.scopes.join(" "));
-		url.searchParams.set("state", state);
+
+		const state = options.state ?? null;
+		if (state !== null) {
+			url.searchParams.set("state", state);
+		}
 
 		return { url: url.toString(), state };
 	}
@@ -386,3 +385,5 @@ export class FortytwoIntraClient {
 		return this.get(this.token_info_url, options);
 	}
 }
+
+export { FortytwoIntraClientError, isFortytwoIntraClientError };
