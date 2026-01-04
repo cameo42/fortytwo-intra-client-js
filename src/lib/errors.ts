@@ -1,9 +1,9 @@
 import { AxiosError } from "axios";
 
 export class FortytwoIntraClientError extends Error {
-	public statusCode: number | null;
-	public statusText: string | null;
-	public data: any;
+	public statusCode: number;
+	public statusText: string;
+	public data: unknown;
 
 	constructor(error: AxiosError) {
 		const method = error.config?.method?.toUpperCase() ?? null;
@@ -28,6 +28,6 @@ export function simplifyAxiosError(error: AxiosError): FortytwoIntraClientError 
 	return new FortytwoIntraClientError(error);
 }
 
-export function isFortytwoIntraClientError(error: any) {
+export function isFortytwoIntraClientError(error: unknown): error is FortytwoIntraClientError {
 	return error instanceof FortytwoIntraClientError;
 }
