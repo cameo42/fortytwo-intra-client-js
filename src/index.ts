@@ -1,8 +1,9 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
 import { getLastPage } from "./lib/pagination";
-import { inputOptions, perPage, reqOptions } from "./types";
+import { inputOptions, reqOptions } from "./types";
 import { getErrorLogLine, getLogLine } from "./lib/logs";
+import { FortytwoIntraClientError, simplifyAxiosError, isFortytwoIntraClientError } from "./lib/errors";
 import crypto from "crypto";
 
 export interface FortytwoIntraClientConf {
@@ -154,7 +155,7 @@ export class FortytwoIntraClient {
 					options.attempt++;
 					return this.reqHandler(url, options);
 				} else {
-					if (this.throwOnError) throw err;
+					if (this.throwOnError) throw simplifyAxiosError(err);
 				}
 			} else {
 				throw err;
@@ -293,7 +294,7 @@ export class FortytwoIntraClient {
 		const perPage = options.perPage || 100;
 
 		let url = new URL(endpoint);
-		const initialRes = await this.reqHandler(url, {
+		const firstPage = await this.reqHandler(url, {
 			method: "GET",
 			attempt: 0,
 			currpage: 1,
@@ -311,9 +312,9 @@ export class FortytwoIntraClient {
 
 		let lastPage: number;
 		try {
-			lastPage = Math.min(getLastPage(initialRes.headers["link"]), options.maxPages || Infinity);
+			lastPage = Math.min(getLastPage(firstPage.headers["link"]), options.maxPages || Infinity);
 		} catch (err) {
-			return initialRes?.data;
+			return firstPage?.data;
 		}
 
 		const promises = [];
@@ -339,9 +340,9 @@ export class FortytwoIntraClient {
 			);
 		}
 
-		return Promise.all(promises).then((values) => {
-			return initialRes?.data.concat(...values.map((value) => value.data));
-		});
+		const followingPages = await Promise.all(promises);
+
+		return firstPage?.data.concat(...followingPages.map((value) => value.data));
 	}
 
 	public URL(endpoint: string) {
@@ -386,3 +387,5 @@ export class FortytwoIntraClient {
 		return this.get(this.token_info_url, options);
 	}
 }
+
+export { FortytwoIntraClientError, isFortytwoIntraClientError };
