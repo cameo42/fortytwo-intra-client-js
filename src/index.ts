@@ -185,15 +185,15 @@ export class FortytwoIntraClient {
 	// Public methods
 	public async get(
 		endpoint: URL | string,
-		options?: Omit<inputOptions, "body" | "perPage" | "maxPage">
+		options?: Omit<inputOptions, "body" | "perPage" | "maxPages">
 	): Promise<any>;
 	public async get<S extends z.ZodType>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "body" | "perPage" | "maxPage"> & { schema: S }
+		options: Omit<inputOptions, "body" | "perPage" | "maxPages"> & { schema: S }
 	): Promise<z.infer<S>>;
 	public async get<S extends z.ZodType | undefined = undefined>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "body" | "perPage" | "maxPage"> & { schema?: S } = {}
+		options: Omit<inputOptions, "body" | "perPage" | "maxPages"> & { schema?: S } = {}
 	): Promise<any> {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -216,15 +216,15 @@ export class FortytwoIntraClient {
 
 	public async post(
 		endpoint: URL | string,
-		options?: Omit<inputOptions, "perPage" | "maxPage">,
+		options?: Omit<inputOptions, "perPage" | "maxPages">,
 	): Promise<any>;
 	public async post<S extends z.ZodType>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema: S }
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
 	): Promise<z.infer<S>>;
 	public async post<S extends z.ZodType | undefined = undefined>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema?: S } = {}
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -247,15 +247,15 @@ export class FortytwoIntraClient {
 
 	public async put(
 		endpoint: URL | string,
-		options?: Omit<inputOptions, "perPage" | "maxPage">
+		options?: Omit<inputOptions, "perPage" | "maxPages">
 	): Promise<any>;
 	public async put<S extends z.ZodType>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema: S }
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
 	): Promise<z.infer<S>>;
 	public async put<S extends z.ZodType | undefined = undefined>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema?: S } = {}
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -278,15 +278,15 @@ export class FortytwoIntraClient {
 
 	public async patch(
 		endpoint: URL | string,
-		options?: Omit<inputOptions, "perPage" | "maxPage">
+		options?: Omit<inputOptions, "perPage" | "maxPages">
 	): Promise<any>;
 	public async patch<S extends z.ZodType>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema: S }
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
 	): Promise<z.infer<S>>;
 	public async patch<S extends z.ZodType | undefined = undefined>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema?: S } = {}
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -309,15 +309,15 @@ export class FortytwoIntraClient {
 
 	public async delete(
 		endpoint: URL | string,
-		options?: Omit<inputOptions, "perPage" | "maxPage">
+		options?: Omit<inputOptions, "perPage" | "maxPages">
 	): Promise<any>;
 	public async delete<S extends z.ZodType>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema: S }
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
 	): Promise<z.infer<S>>;
 	public async delete<S extends z.ZodType | undefined = undefined>(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> & { schema?: S } = {}
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -458,7 +458,7 @@ export class FortytwoIntraClient {
 	}
 
 	public async tokenInfos(
-		options: Omit<inputOptions, "body" | "perPage" | "maxPage"> = {}
+		options: Omit<inputOptions, "body" | "perPage" | "maxPages"> = {}
 	) {
 		return this.get(this.token_info_url, options);
 	}
