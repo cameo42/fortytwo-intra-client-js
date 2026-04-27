@@ -1,11 +1,20 @@
 {
   "compilerOptions": {
-    "target": "es2022",                       // Modern JavaScript output[4]
-    "module": "NodeNext",                     // Best for libraries/modules in Node.js[2][4]
+    "target": "es2022", // Modern JavaScript output[4]
+    "module": "NodeNext", // Best for libraries/modules in Node.js[2][4]
     "declaration": true,
-    "outDir": "./dist",                       // Compiled output directory[2][4]
-    "strict": true,                           // Enable all strict type checks[2][4]
+    "rootDir": "./src",
+    "outDir": "./dist", // Compiled output directory[2][4]
+    "types": [
+      "node"
+    ],
+    "strict": true, // Enable all strict type checks[2][4]
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
