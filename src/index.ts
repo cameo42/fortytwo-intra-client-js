@@ -1,9 +1,10 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from "axios";
 import rateLimit from "axios-rate-limit";
 import { getLastPage } from "./lib/pagination";
 import { inputOptions, reqOptions } from "./types";
 import { getErrorLogLine, getLogLine } from "./lib/logs";
-import { FortytwoIntraClientError, simplifyAxiosError, isFortytwoIntraClientError } from "./lib/errors";
+import { FortytwoIntraClientError, isFortytwoIntraClientError } from "./lib/errors";
+import { z } from "zod";
 
 export interface FortytwoIntraClientConf {
 	redirect_uri: string | null;
@@ -130,14 +131,14 @@ export class FortytwoIntraClient {
 		});
 	}
 
-	private async reqHandler(url: URL, options: reqOptions): Promise<any> {
+	private async reqHandler(url: URL, options: reqOptions): Promise<AxiosResponse> {
 		try {
 			const res = await this.fetch(url, options);
 			this.logSuccess(res, options);
 
 			return res;
-		} catch (err: any) {
-			if (err.isAxiosError) {
+		} catch (err) {
+			if (isAxiosError(err)) {
 				this.logError(err, options);
 
 				const { attempt, maxRetry } = options;
@@ -150,7 +151,7 @@ export class FortytwoIntraClient {
 					options.attempt++;
 					return this.reqHandler(url, options);
 				} else {
-					throw simplifyAxiosError(err);
+					throw new FortytwoIntraClientError(err)
 				}
 			} else {
 				throw err;
@@ -184,8 +185,16 @@ export class FortytwoIntraClient {
 	// Public methods
 	public async get(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "body" | "perPage" | "maxPage"> = {}
-	) {
+		options?: Omit<inputOptions, "body" | "perPage" | "maxPages">
+	): Promise<any>;
+	public async get<S extends z.ZodType>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "body" | "perPage" | "maxPages"> & { schema: S }
+	): Promise<z.infer<S>>;
+	public async get<S extends z.ZodType | undefined = undefined>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "body" | "perPage" | "maxPages"> & { schema?: S } = {}
+	): Promise<any> {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
 		}
@@ -199,12 +208,23 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		return res?.data;
+		if (options.schema) {
+			return options.schema.parse(res.data);
+		}
+		return res.data;
 	}
 
 	public async post(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> = {}
+		options?: Omit<inputOptions, "perPage" | "maxPages">,
+	): Promise<any>;
+	public async post<S extends z.ZodType>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
+	): Promise<z.infer<S>>;
+	public async post<S extends z.ZodType | undefined = undefined>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -219,12 +239,23 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		return res?.data;
+		if (options.schema) {
+			return options.schema.parse(res.data);
+		}
+		return res.data;
 	}
 
 	public async put(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> = {}
+		options?: Omit<inputOptions, "perPage" | "maxPages">
+	): Promise<any>;
+	public async put<S extends z.ZodType>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
+	): Promise<z.infer<S>>;
+	public async put<S extends z.ZodType | undefined = undefined>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -239,12 +270,23 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		return res?.data;
+		if (options.schema) {
+			return options.schema.parse(res.data);
+		}
+		return res.data;
 	}
 
 	public async patch(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> = {}
+		options?: Omit<inputOptions, "perPage" | "maxPages">
+	): Promise<any>;
+	public async patch<S extends z.ZodType>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
+	): Promise<z.infer<S>>;
+	public async patch<S extends z.ZodType | undefined = undefined>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -259,12 +301,23 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		return res?.data;
+		if (options.schema) {
+			return options.schema.parse(res.data);
+		}
+		return res.data;
 	}
 
 	public async delete(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "perPage" | "maxPage"> = {}
+		options?: Omit<inputOptions, "perPage" | "maxPages">
+	): Promise<any>;
+	public async delete<S extends z.ZodType>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema: S }
+	): Promise<z.infer<S>>;
+	public async delete<S extends z.ZodType | undefined = undefined>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "perPage" | "maxPages"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -279,12 +332,23 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		return res?.data;
+		if (options.schema) {
+			return options.schema.parse(res.data);
+		}
+		return res.data;
 	}
 
 	public async getAll(
 		endpoint: URL | string,
-		options: Omit<inputOptions, "body"> = {}
+		options?: Omit<inputOptions, "body">
+	): Promise<any>;
+	public async getAll<S extends z.ZodType>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "body"> & { schema: S }
+	): Promise<z.infer<S>>;
+	public async getAll<S extends z.ZodType | undefined = undefined>(
+		endpoint: URL | string,
+		options: Omit<inputOptions, "body"> & { schema?: S } = {}
 	) {
 		if (endpoint instanceof URL === false) {
 			endpoint = new URL(endpoint, this.base_url);
@@ -309,11 +373,21 @@ export class FortytwoIntraClient {
 			}
 		});
 
+		if (!Array.isArray(firstPage.data)) {
+			if (options.schema) {
+				return options.schema.parse(firstPage.data);
+			}
+			return firstPage.data;
+		}
+
 		let lastPage: number;
 		try {
 			lastPage = Math.min(getLastPage(firstPage.headers["link"]), options.maxPages || Infinity);
 		} catch (err) {
-			return firstPage?.data;
+			if (options.schema) {
+				return options.schema.parse(firstPage.data);
+			}
+			return firstPage.data;
 		}
 
 		const promises = Array.from({ length: lastPage - 1 }, (_, i) => i + 2)
@@ -333,9 +407,13 @@ export class FortytwoIntraClient {
 				}
 			}));
 
-		const followingPages = await Promise.all(promises);
+		const otherPages = await Promise.all(promises);
+		const allData = [...firstPage.data, ...otherPages.flatMap((res) => res.data)];
 
-		return firstPage?.data.concat(...followingPages.map((value) => value.data));
+		if (options.schema) {
+			return options.schema.parse(allData);
+		}
+		return allData;
 	}
 
 	public URL(endpoint: string) {
@@ -376,11 +454,11 @@ export class FortytwoIntraClient {
 			code: code,
 		});
 
-		return res?.data;
+		return res.data;
 	}
 
 	public async tokenInfos(
-		options: Omit<inputOptions, "body" | "perPage" | "maxPage"> = {}
+		options: Omit<inputOptions, "body" | "perPage" | "maxPages"> = {}
 	) {
 		return this.get(this.token_info_url, options);
 	}

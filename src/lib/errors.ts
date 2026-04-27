@@ -24,10 +24,6 @@ export class FortytwoIntraClientError extends Error {
 	}
 }
 
-export function simplifyAxiosError(error: AxiosError): FortytwoIntraClientError {
-	return new FortytwoIntraClientError(error);
-}
-
 export function isFortytwoIntraClientError(error: unknown): error is FortytwoIntraClientError {
 	return error instanceof FortytwoIntraClientError;
 }

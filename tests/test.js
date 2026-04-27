@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { FortytwoIntraClient } from '../dist/index.js';
 import { configDotenv } from 'dotenv';
 
@@ -16,13 +17,19 @@ if (missing.length) {
 	process.exit(1);
 }
 
-const RATE = Number(process.env.FORTYTWO_CLIENT_RATE) || 8;
+const rate = Number(process.env.FORTYTWO_CLIENT_RATE) || 8;
 
 const client = new FortytwoIntraClient(
 	FORTYTWO_CLIENT_ID,
 	FORTYTWO_CLIENT_SECRET,
-	{ rate: RATE }
+	{ rateLimitMaxRequests: rate }
 );
 
 const test = await client.get('users', { perPage: 100, maxPages: Infinity, query: { filter: { login: "ibertran", primary_campus_id: 9 } } });
 console.log(test.length);
+
+const validation = await client.get("users", { schema: z.array(z.object({ login: z.string() })) });
+console.log(validation);
+
+const paginated = await client.getAll("groups", { schema: z.array(z.object({ id: z.number() })) })
+console.log(paginated);
