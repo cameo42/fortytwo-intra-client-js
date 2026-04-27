@@ -28,5 +28,8 @@ const client = new FortytwoIntraClient(
 const test = await client.get('users', { perPage: 100, maxPages: Infinity, query: { filter: { login: "ibertran", primary_campus_id: 9 } } });
 console.log(test.length);
 
-const validation = await client.get("users", { schema: z.array(z.object({ login: z.string()})) });
+const validation = await client.get("users", { schema: z.array(z.object({ login: z.string() })) });
 console.log(validation);
+
+const paginated = await client.getAll("groups", { schema: z.array(z.object({ id: z.number() })) })
+console.log(paginated);
