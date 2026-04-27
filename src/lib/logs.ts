@@ -16,7 +16,7 @@ function formatQueryParams(params: Record<string, any>): string {
 		depth: Infinity,
 		compact: true,
 		breakLength: Infinity,
-		colors: true
+		colors: true,
 	});
 }
 
@@ -41,7 +41,9 @@ export function getLogLine(res: AxiosResponse, options: reqOptions) {
 
 	// Add pagination info
 	if (options.currpage) {
-		tokens.push(`| ${options.currpage}/${options.lastPage === Infinity ? "..." : options.lastPage}`);
+		tokens.push(
+			`| ${options.currpage}/${options.lastPage === Infinity ? "..." : options.lastPage}`,
+		);
 	}
 
 	return tokens.join(" ");

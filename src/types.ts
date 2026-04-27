@@ -22,7 +22,10 @@ export type reqOptions = {
 	errLogBody?: boolean;
 };
 
-export type querystring = Record<string, string | number | boolean | Array<string | number | boolean>>;
+export type querystring = Record<
+	string,
+	string | number | boolean | Array<string | number | boolean>
+>;
 
 export type perPage = { perPage?: number };
 

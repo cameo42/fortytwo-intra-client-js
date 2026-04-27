@@ -1,0 +1,19 @@
+name: "Prettier Check"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  prettier:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Prettier
+        run: npm run prettier

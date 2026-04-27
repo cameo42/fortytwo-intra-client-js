@@ -3,17 +3,15 @@ export function getLastPage(header: string | undefined) {
 		throw Error("No pagination link header");
 	}
 
-	const paginationlinks = header
-		.split(",")
-		.reduce<Record<string, string>>((links, part) => {
-			const match = part.match(/<([^>]+)>\s*;\s*rel="([^"]+)"/);
-			if (match) {
-				const url = match[1];
-				const rel = match[2];
-				links[rel] = url;
-			}
-			return links;
-		}, {});
+	const paginationlinks = header.split(",").reduce<Record<string, string>>((links, part) => {
+		const match = part.match(/<([^>]+)>\s*;\s*rel="([^"]+)"/);
+		if (match) {
+			const url = match[1];
+			const rel = match[2];
+			links[rel] = url;
+		}
+		return links;
+	}, {});
 
 	if (!paginationlinks.last) {
 		throw Error("Missing last page link");
