@@ -1,6 +1,6 @@
 # FortytwoIntraClient
 
-A TypeScript library for interacting with the 42API with built-in rate limiting, automatic token management, and retry logic.
+A TypeScript library for interacting with the 42 API with built-in rate limiting, automatic token management, and retry logic.
 
 ## Installation
 
@@ -126,7 +126,7 @@ const allProjects = await client.getAll("projects", {
 
 ```typescript
 // 1. Get OAuth authorization URL
-const authUrl = client.getOAuthUrl("http://localhost:3000/callback");
+const { url: authUrl } = client.getOAuthUrl();
 // Redirect user to authUrl
 
 // 2. Exchange authorization code for tokens
@@ -144,12 +144,14 @@ console.log(`Welcome ${currentUser.displayname}!`);
 
 ```typescript
 // Set redirect URI in constructor
-const client = new IntraApiProxy("client_id", "client_secret", {
+const client = new FortytwoIntraClient("client_id", "client_secret", {
 	redirect_uri: "http://localhost:3000/callback",
 });
 
 // Or pass it to getOAuthUrl
-const authUrl = client.getOAuthUrl("http://localhost:3000/callback");
+const { url: authUrl } = client.getOAuthUrl({
+	redirect_uri: "http://localhost:3000/callback",
+});
 ```
 
 ## Utility Methods
@@ -176,9 +178,9 @@ try {
 	const user = await client.get("users/jdoe");
 	console.log(`Found user: ${user.displayname}`);
 } catch (error) {
-	if (error.status === 404) {
+	if (error.statusCode === 404) {
 		console.error("User not found");
-	} else if (error.status === 403) {
+	} else if (error.statusCode === 403) {
 		console.error("Access forbidden - check your token permissions");
 	} else {
 		console.error("Request failed after retries:", error.message);
@@ -226,13 +228,13 @@ const client = new FortytwoIntraClient(
 	process.env.INTRA_CLIENT_SECRET!,
 	{
 		redirect_uri: "http://localhost:3000/callback",
-		oauth_scope: ["public"],
+		scopes: ["public"],
 	},
 );
 
 // Redirect to 42 OAuth
 app.get("/login", (req, res) => {
-	const authUrl = client.getOAuthUrl();
+	const { url: authUrl } = client.getOAuthUrl();
 	res.redirect(authUrl);
 });
 
