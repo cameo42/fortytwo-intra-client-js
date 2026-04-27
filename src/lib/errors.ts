@@ -12,9 +12,8 @@ export class FortytwoIntraClientError extends Error {
 		const statusCode = error.response?.status ?? NaN;
 		const statusText = error.response?.statusText ?? "Unknown";
 
-		const message = method && route
-			? `${method} ${route} - HTTP ${statusCode} ${statusText}`
-			: error.message;
+		const message =
+			method && route ? `${method} ${route} - HTTP ${statusCode} ${statusText}` : error.message;
 
 		super(message);
 		this.name = "FortytwoIntraClientError";
