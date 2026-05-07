@@ -1,6 +1,6 @@
 import { AxiosError } from "axios";
 
-export class FortytwoIntraClientError extends Error {
+export class FortytwoIntraClientHttpError extends Error {
 	public statusCode: number;
 	public statusText: string;
 	public data: unknown;
@@ -16,13 +16,15 @@ export class FortytwoIntraClientError extends Error {
 			method && route ? `${method} ${route} - HTTP ${statusCode} ${statusText}` : error.message;
 
 		super(message);
-		this.name = "FortytwoIntraClientError";
+		this.name = "FortytwoIntraClientHttpError";
 		this.statusCode = statusCode;
 		this.statusText = statusText;
 		this.data = error.response?.data;
 	}
 }
 
-export function isFortytwoIntraClientError(error: unknown): error is FortytwoIntraClientError {
-	return error instanceof FortytwoIntraClientError;
+export function isFortytwoIntraClientHttpError(
+	error: unknown,
+): error is FortytwoIntraClientHttpError {
+	return error instanceof FortytwoIntraClientHttpError;
 }

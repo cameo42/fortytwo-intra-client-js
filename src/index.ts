@@ -1,10 +1,14 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from "axios";
 import rateLimit from "axios-rate-limit";
-import { getLastPage } from "./lib/pagination";
+import { z } from "zod";
 import { inputOptions, reqOptions } from "./types";
 import { getErrorLogLine, getLogLine } from "./lib/logs";
-import { FortytwoIntraClientError, isFortytwoIntraClientError } from "./lib/errors";
-import { z } from "zod";
+import { getLastPage } from "./lib/pagination";
+import { FortytwoIntraClientHttpError } from "./errors/httpError";
+import { FortytwoIntraClientValidationError } from "./errors/validationError";
+
+export * from "./errors/httpError";
+export * from "./errors/validationError";
 
 export interface FortytwoIntraClientConf {
 	redirect_uri: string | null;
@@ -149,7 +153,7 @@ export class FortytwoIntraClient {
 					options.attempt++;
 					return this.reqHandler(url, options);
 				} else {
-					throw new FortytwoIntraClientError(err);
+					throw new FortytwoIntraClientHttpError(err);
 				}
 			} else {
 				throw err;
@@ -174,6 +178,23 @@ export class FortytwoIntraClient {
 			console.log(line, logBody ? JSON.stringify(body, null, 2) : "");
 		} catch {
 			console.log(line, logBody ? body : "");
+		}
+	}
+
+	private validate<S extends z.ZodType>(data: any, schema: S): z.infer<S>;
+	private validate<S extends z.ZodType | undefined>(data: any, schema?: S): any;
+	private validate<S extends z.ZodType | undefined>(data: any, schema?: S): any {
+		if (!schema) {
+			return data;
+		}
+
+		try {
+			return schema.parse(data);
+		} catch (err) {
+			if (err instanceof z.ZodError) {
+				throw new FortytwoIntraClientValidationError(err, data);
+			}
+			throw err;
 		}
 	}
 
@@ -203,10 +224,7 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		if (options.schema) {
-			return options.schema.parse(res.data);
-		}
-		return res.data;
+		return this.validate(res.data, options.schema);
 	}
 
 	public async post(
@@ -234,10 +252,7 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		if (options.schema) {
-			return options.schema.parse(res.data);
-		}
-		return res.data;
+		return this.validate(res.data, options.schema);
 	}
 
 	public async put(
@@ -265,10 +280,7 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		if (options.schema) {
-			return options.schema.parse(res.data);
-		}
-		return res.data;
+		return this.validate(res.data, options.schema);
 	}
 
 	public async patch(
@@ -296,10 +308,7 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		if (options.schema) {
-			return options.schema.parse(res.data);
-		}
-		return res.data;
+		return this.validate(res.data, options.schema);
 	}
 
 	public async delete(
@@ -327,10 +336,7 @@ export class FortytwoIntraClient {
 			...options,
 		});
 
-		if (options.schema) {
-			return options.schema.parse(res.data);
-		}
-		return res.data;
+		return this.validate(res.data, options.schema);
 	}
 
 	public async getAll(endpoint: URL | string, options?: Omit<inputOptions, "body">): Promise<any>;
@@ -366,20 +372,14 @@ export class FortytwoIntraClient {
 		});
 
 		if (!Array.isArray(firstPage.data)) {
-			if (options.schema) {
-				return options.schema.parse(firstPage.data);
-			}
-			return firstPage.data;
+			return this.validate(firstPage.data, options.schema);
 		}
 
 		let lastPage: number;
 		try {
 			lastPage = Math.min(getLastPage(firstPage.headers["link"]), options.maxPages || Infinity);
 		} catch (err) {
-			if (options.schema) {
-				return options.schema.parse(firstPage.data);
-			}
-			return firstPage.data;
+			return this.validate(firstPage.data, options.schema);
 		}
 
 		const promises = Array.from({ length: lastPage - 1 }, (_, i) => i + 2).map((pageNumber) =>
@@ -403,10 +403,7 @@ export class FortytwoIntraClient {
 		const otherPages = await Promise.all(promises);
 		const allData = [...firstPage.data, ...otherPages.flatMap((res) => res.data)];
 
-		if (options.schema) {
-			return options.schema.parse(allData);
-		}
-		return allData;
+		return this.validate(allData, options.schema);
 	}
 
 	public URL(endpoint: string) {
@@ -454,5 +451,3 @@ export class FortytwoIntraClient {
 		return this.get(this.token_info_url, options);
 	}
 }
-
-export { FortytwoIntraClientError, isFortytwoIntraClientError };
