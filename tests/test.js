@@ -35,3 +35,11 @@ console.log(validation);
 
 const paginated = await client.getAll("groups", { schema: z.array(z.object({ id: z.number() })) });
 console.log(paginated);
+
+try {
+	const schemaError = await client.get("users/cameo", {
+		schema: z.object({ kind: z.string().min(24) }),
+	});
+} catch (err) {
+	console.error(err);
+}
