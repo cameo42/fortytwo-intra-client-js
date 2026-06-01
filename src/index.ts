@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from "axios";
 import rateLimit from "axios-rate-limit";
-import { z } from "zod";
+import z from "zod";
 import { inputOptions, reqOptions } from "./types";
 import { getErrorLogLine, getLogLine } from "./lib/logs";
 import { getLastPage } from "./lib/pagination";

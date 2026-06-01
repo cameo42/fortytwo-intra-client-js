@@ -1,4 +1,4 @@
-import { z } from "zod";
+import z from "zod";
 import { FortytwoIntraClient } from "../dist/index.js";
 import { configDotenv } from "dotenv";
 

@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { FortytwoIntraClient, FortytwoIntraV3Client } from "../dist/index.js";
+import { FortytwoIntraV3Client } from "../dist/index.js";
 import { configDotenv } from "dotenv";
 
 configDotenv();
@@ -23,12 +22,17 @@ if (missing.length) {
 	process.exit(1);
 }
 
-const client = new FortytwoIntraV3Client({
-	client_id: INTRA_V3_CLIENT_ID,
-	client_secret: INTRA_V3_CLIENT_SECRET,
-	username: INTRA_V3_USERNAME,
-	password: INTRA_V3_PASSWORD,
-});
+const client = new FortytwoIntraV3Client(
+	{
+		client_id: INTRA_V3_CLIENT_ID,
+		client_secret: INTRA_V3_CLIENT_SECRET,
+		username: INTRA_V3_USERNAME,
+		password: INTRA_V3_PASSWORD,
+	},
+	{
+		base_url: "https://pace-system.42.fr/api/v1/",
+	},
+);
 
-const test = await client.get("https://pace-system.42.fr/api/v1/milestones");
+const test = await client.get("milestones");
 console.log(test);

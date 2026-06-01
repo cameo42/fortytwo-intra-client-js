@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from "axios";
-import { z } from "zod";
+import z from "zod";
 import { inputOptions, reqOptions } from "../types";
 import { getErrorLogLine, getLogLine } from "../lib/logs";
 import { FortytwoIntraClientHttpError } from "../errors/httpError";
@@ -10,8 +10,7 @@ export * from "../errors/httpError";
 export * from "../errors/validationError";
 
 export interface FortytwoIntraClientConf {
-	redirect_uri: string | null;
-	base_url: string;
+	base_url: string | undefined;
 	token_url: string;
 	maxRetry: number;
 	logLine: boolean;
@@ -19,8 +18,7 @@ export interface FortytwoIntraClientConf {
 }
 
 const defaultConf: FortytwoIntraClientConf = {
-	redirect_uri: null,
-	base_url: "https://api.intra.42.fr/v2/",
+	base_url: undefined,
 	token_url: "https://auth.42.fr/auth/realms/staff-42/protocol/openid-connect/token",
 	maxRetry: 5,
 	logLine: true,
@@ -35,7 +33,7 @@ type Credentials = {
 };
 
 export class FortytwoIntraV3Client {
-	private base_url: string;
+	private base_url: string | undefined;
 	private token_url: string;
 	private axiosInstance: AxiosInstance;
 	private retryOn: number[];
@@ -47,7 +45,7 @@ export class FortytwoIntraV3Client {
 
 	constructor(
 		private credentials: Credentials,
-		conf: Partial<FortytwoIntraClientConf>,
+		conf: Partial<FortytwoIntraClientConf> = {},
 	) {
 		const config: FortytwoIntraClientConf = { ...defaultConf, ...conf };
 
@@ -120,7 +118,6 @@ export class FortytwoIntraV3Client {
 		const cleanUrl = new URL(url);
 		cleanUrl.search = "";
 
-		// Use the rate-limited axios instance
 		return this.axiosInstance.request({
 			method: method.toLowerCase(),
 			url: cleanUrl.toString(),
