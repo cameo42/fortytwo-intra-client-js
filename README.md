@@ -20,6 +20,26 @@ const user = await client.get("users/ibertran");
 console.log(user);
 ```
 
+## Intra V3
+
+The library also exports `FortytwoIntraV3Client` for staff-only Intra V3 endpoints that use the 42 Auth token flow.
+
+```typescript
+import { FortytwoIntraV3Client } from "@ibertran/fortytwo-intra-client";
+
+const client = new FortytwoIntraV3Client({
+	client_id: "staff-42-campus",
+	client_secret: "your_client_secret",
+	username: "your_staff_login",
+	password: "your_staff_password",
+});
+
+const response = await client.get("some/v3/endpoint");
+console.log(response);
+```
+
+The V3 client automatically requests a bearer token, reuses it while valid, and falls back to the refresh token when available.
+
 ## Configuration
 
 The `FortytwoIntraClient` class accepts three parameters:
