@@ -1,7 +1,13 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from "axios";
+import axios, {
+	AxiosError,
+	AxiosInstance,
+	AxiosRequestConfig,
+	AxiosResponse,
+	isAxiosError,
+} from "axios";
 import rateLimit from "axios-rate-limit";
 import z from "zod";
-import { inputOptions, reqOptions } from "./types";
+import { inputOptions, reqOptions, userToken } from "./types";
 import { getErrorLogLine, getLogLine } from "./lib/logs";
 import { getLastPage } from "./lib/pagination";
 import { FortytwoIntraClientHttpError } from "./errors/httpError";
@@ -55,7 +61,8 @@ export class FortytwoIntraClient {
 	private logLine: boolean;
 	private errLogBody: boolean;
 
-	private access_token: string | null;
+	private authorization: { access_token: string; expires_at: number } | null;
+	private tokenRequest: Promise<{ access_token: string; expires_at: number }> | null = null;
 
 	constructor(
 		private client_id: string,
@@ -86,7 +93,7 @@ export class FortytwoIntraClient {
 		this.logLine = config.logLine;
 		this.errLogBody = config.errLogBody;
 
-		this.access_token = null;
+		this.authorization = null;
 	}
 
 	private async generateToken() {
@@ -97,18 +104,38 @@ export class FortytwoIntraClient {
 			scope: this.scopes.join(" "),
 		});
 
-		return res.data.access_token;
+		const { access_token, expires_in } = z
+			.object({ access_token: z.string(), expires_in: z.number() })
+			.parse(res.data);
+
+		return { access_token, expires_at: Date.now() + expires_in * 1_000 };
+	}
+
+	private isTokenValid(): boolean {
+		return this.authorization !== null && this.authorization.expires_at - 30_000 > Date.now();
+	}
+
+	private async getAccessToken(token?: userToken): Promise<string> {
+		if (token) {
+			return token.access_token;
+		}
+
+		if (!this.isTokenValid()) {
+			// Share a single in-flight token request between concurrent callers
+			this.tokenRequest ??= this.generateToken().finally(() => {
+				this.tokenRequest = null;
+			});
+			this.authorization = await this.tokenRequest;
+		}
+
+		return this.authorization!.access_token;
 	}
 
 	private async fetch(url: URL, options: reqOptions) {
 		const { method, body, query } = options;
 
-		if (!options.token && !this.access_token) {
-			this.access_token = await this.generateToken();
-		}
-
 		// Attach access_token
-		const accessToken = options.token ? options.token.access_token : this.access_token;
+		const accessToken = await this.getAccessToken(options.token);
 
 		// Extract query parameters from URL and combine with options.query
 		const urlParams: Record<string, any> = {};
@@ -150,7 +177,7 @@ export class FortytwoIntraClient {
 
 				if (maxRetry > 0 && attempt < maxRetry && status && this.retryOn.includes(status)) {
 					if (status === 401) {
-						this.access_token = null;
+						this.authorization = null;
 					}
 					options.attempt++;
 					return this.reqHandler(url, options);
@@ -406,6 +433,22 @@ export class FortytwoIntraClient {
 		const allData = [...firstPage.data, ...otherPages.flatMap((res) => res.data)];
 
 		return this.validate(allData, options.schema);
+	}
+
+	public async rawRequest<T = any, D = any>(
+		config: AxiosRequestConfig<D>,
+		token?: userToken,
+	): Promise<AxiosResponse<T, D>> {
+		const accessToken = await this.getAccessToken(token);
+
+		return this.axiosInstance.request<T, AxiosResponse<T, D>, D>({
+			baseURL: this.base_url,
+			...config,
+			headers: {
+				...config.headers,
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
 	}
 
 	public URL(endpoint: string) {
