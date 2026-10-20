@@ -140,6 +140,27 @@ const allProjects = await client.getAll("projects", {
 });
 ```
 
+### Raw Requests
+
+The `rawRequest` method takes a plain [axios request config](https://axios-http.com/docs/req_config), injects the access token, and returns the raw `AxiosResponse`. Relative URLs are resolved against the client's `base_url` unless `baseURL` is set in the config.
+
+Unlike the other methods, it does not retry, log, validate, or wrap errors: failures are thrown as `AxiosError`.
+
+```typescript
+// Full axios config, raw response
+const res = await client.rawRequest({
+	method: "get",
+	url: "campus/9/users",
+	params: { "page[size]": 100 },
+});
+console.log(res.status, res.headers["x-total"], res.data);
+
+// With a user token (V2 client only)
+const me = await client.rawRequest({ url: "me" }, tokens);
+```
+
+`rawRequest` is available on both `FortytwoIntraClient` and `FortytwoIntraV3Client`. On the V2 client, requests still go through the rate limiter.
+
 ## OAuth Authentication
 
 ### Authorization Flow

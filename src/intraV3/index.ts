@@ -1,4 +1,10 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from "axios";
+import axios, {
+	AxiosError,
+	AxiosInstance,
+	AxiosRequestConfig,
+	AxiosResponse,
+	isAxiosError,
+} from "axios";
 import z from "zod";
 import { inputOptions, reqOptions } from "../types";
 import { getErrorLogLine, getLogLine } from "../lib/logs";
@@ -42,6 +48,7 @@ export class FortytwoIntraV3Client {
 	private errLogBody: boolean;
 
 	private authorization: Token | null;
+	private tokenRequest: Promise<Token> | null = null;
 
 	constructor(
 		private credentials: Credentials,
@@ -95,15 +102,23 @@ export class FortytwoIntraV3Client {
 		);
 	}
 
+	private async getAccessToken(): Promise<string> {
+		if (!this.isTokenValid()) {
+			// Share a single in-flight token request between concurrent callers
+			this.tokenRequest ??= this.generateToken().finally(() => {
+				this.tokenRequest = null;
+			});
+			this.authorization = await this.tokenRequest;
+		}
+
+		return this.authorization!.access_token;
+	}
+
 	private async fetch(url: URL, options: reqOptions) {
 		const { method, body, query } = options;
 
-		if (!this.isTokenValid()) {
-			this.authorization = await this.generateToken();
-		}
-
 		// Attach access_token
-		const accessToken = this.authorization?.access_token;
+		const accessToken = await this.getAccessToken();
 
 		// Extract query parameters from URL and combine with options.query
 		const urlParams: Record<string, any> = {};
@@ -333,6 +348,21 @@ export class FortytwoIntraV3Client {
 		});
 
 		return this.validate(res.data, options.schema);
+	}
+
+	public async rawRequest<T = any, D = any>(
+		config: AxiosRequestConfig<D>,
+	): Promise<AxiosResponse<T, D>> {
+		const accessToken = await this.getAccessToken();
+
+		return this.axiosInstance.request<T, AxiosResponse<T, D>, D>({
+			baseURL: this.base_url,
+			...config,
+			headers: {
+				...config.headers,
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
 	}
 
 	public URL(endpoint: string) {
